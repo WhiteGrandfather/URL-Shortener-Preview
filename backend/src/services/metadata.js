@@ -17,6 +17,92 @@ function toAbsoluteUrl(maybeRelative, baseUrl) {
   }
 }
 
+function pickFirstNonEmpty(values) {
+  for (const value of values) {
+    const normalized = normalizeText(value);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+function isLikelyDecorativeImage(src, width, height) {
+  const normalizedSrc = (src || "").toLowerCase();
+  const w = Number.parseInt(width || "", 10);
+  const h = Number.parseInt(height || "", 10);
+
+  if (!normalizedSrc) {
+    return true;
+  }
+
+  if (
+    normalizedSrc.includes("img/0.gif") ||
+    normalizedSrc.includes("spacer") ||
+    normalizedSrc.includes("pixel") ||
+    normalizedSrc.includes("blank")
+  ) {
+    return true;
+  }
+
+  if (
+    Number.isFinite(w) &&
+    Number.isFinite(h) &&
+    w > 0 &&
+    h > 0 &&
+    (w <= 20 || h <= 20)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function pickImageCandidate($) {
+  // 1) Standard social tags.
+  const socialImage = pickFirstNonEmpty([
+    $('meta[property="og:image"]').attr("content"),
+    $('meta[property="og:image:url"]').attr("content"),
+    $('meta[name="twitter:image"]').attr("content"),
+    $('meta[name="twitter:image:src"]').attr("content"),
+    $('meta[itemprop="image"]').attr("content"),
+    $('link[rel="image_src"]').attr("href")
+  ]);
+
+  if (socialImage) {
+    return socialImage;
+  }
+
+  // 2) Try article/content image before generic site icons.
+  const contentImage = $("article img, .pages_content img, .content img, .post img")
+    .map((_, el) => {
+      const src = normalizeText($(el).attr("src"));
+      const width = $(el).attr("width");
+      const height = $(el).attr("height");
+
+      if (isLikelyDecorativeImage(src, width, height)) {
+        return null;
+      }
+
+      return src;
+    })
+    .get()
+    .find((src) => Boolean(src));
+
+  if (contentImage) {
+    return contentImage;
+  }
+
+  // 3) Last resort: site-level icon/tile image.
+  return pickFirstNonEmpty([
+    $('meta[name="msapplication-TileImage"]').attr("content"),
+    $('link[rel="apple-touch-icon"]').first().attr("href"),
+    $('link[rel="icon"]').first().attr("href"),
+    $('link[rel="shortcut icon"]').attr("href")
+  ]);
+}
+
 export async function fetchMetadata(targetUrl) {
   const response = await axios.get(targetUrl, {
     headers: {
@@ -43,8 +129,7 @@ export async function fetchMetadata(targetUrl) {
     normalizeText($('meta[name="description"]').attr("content")) ||
     "No description";
 
-  const imageRaw =
-    normalizeText($('meta[property="og:image"]').attr("content")) || null;
+  const imageRaw = pickImageCandidate($);
 
   return {
     title,

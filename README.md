@@ -52,7 +52,22 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-### 2. Запустить backend
+### 2. Проверить `.env` файлы
+
+Backend (`backend/.env`):
+
+```env
+PORT=3001
+FRONTEND_ORIGIN=http://127.0.0.1:5173,http://localhost:5173
+```
+
+Frontend (`frontend/.env`):
+
+```env
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+### 3. Запустить backend
 
 Первый запуск (создать/применить миграции):
 
@@ -69,7 +84,7 @@ npm run dev
 
 Backend: `http://localhost:3001`
 
-### 3. Запустить frontend
+### 4. Запустить frontend
 
 В отдельном терминале:
 
@@ -80,12 +95,15 @@ npm run dev
 
 Frontend: `http://127.0.0.1:5173`
 
-## Переменные окружения (опционально)
+## Переменные окружения
 
 - Backend:
-  - `FRONTEND_ORIGIN` (по умолчанию `http://localhost:5173`)
+  - `PORT` (по умолчанию `3001`)
+  - `FRONTEND_ORIGIN` (через запятую, например `http://127.0.0.1:5173,http://localhost:5173`)
 - Frontend:
   - `VITE_API_BASE_URL` (по умолчанию `http://localhost:3001`)
+
+`backend` загружает `.env` автоматически через `dotenv`, `frontend` — через встроенную поддержку Vite.
 
 ## API контракт
 

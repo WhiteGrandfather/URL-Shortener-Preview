@@ -47,3 +47,16 @@ export async function saveLink(link) {
 
   return toDomainLink(created);
 }
+
+export async function updateLinkPreview(id, preview) {
+  const updated = await prisma.link.update({
+    where: { id },
+    data: {
+      previewTitle: preview.title,
+      previewDescription: preview.description,
+      previewImage: preview.image
+    }
+  });
+
+  return toDomainLink(updated);
+}
